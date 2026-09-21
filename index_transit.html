@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Riverside Transit Ticket Kiosk</title>
+<style>
+  :root{
+    --navy:#11385b;
+    --blue:#2679c9;
+    --light:#eef6fc;
+    --mid:#d6e7f6;
+    --green:#2e8b57;
+    --red:#c0392b;
+    --text:#1e2b36;
+    --muted:#667786;
+    --shadow:0 18px 46px rgba(17,56,91,.16);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    color:var(--text);
+    background:linear-gradient(135deg,#eef4fa,#f9fbfd);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:26px;
+  }
+  .kiosk{
+    width:min(900px,96vw);
+    min-height:640px;
+    background:#fff;
+    border:10px solid var(--navy);
+    border-radius:34px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .topbar{
+    background:var(--navy);
+    color:#fff;
+    padding:18px 22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-weight:700;
+    letter-spacing:.25px;
+  }
+  .logo{
+    width:38px;height:38px;border-radius:50%;
+    background:#fff;color:var(--navy);
+    display:grid;place-items:center;
+    font-weight:900;
+  }
+  .reset{
+    border:1px solid rgba(255,255,255,.5);
+    background:transparent;
+    color:#fff;
+    border-radius:10px;
+    padding:8px 11px;
+    cursor:pointer;
+    font-size:13px;
+  }
+  .content{padding:34px}
+  .screen{display:none}
+  .screen.active{display:block}
+  h1{
+    color:var(--navy);
+    margin:0 0 10px;
+    font-size:clamp(28px,4vw,42px);
+  }
+  h2{color:var(--navy);margin-top:0}
+  p{line-height:1.5}
+  .muted{color:var(--muted)}
+  .panel{
+    background:var(--light);
+    border:1px solid var(--mid);
+    border-radius:18px;
+    padding:18px 20px;
+    margin:20px 0;
+  }
+  .notice{
+    background:#fff7df;
+    border-left:6px solid #e1a72f;
+    padding:13px 16px;
+    border-radius:10px;
+    margin:18px 0;
+  }
+  .buttons{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-top:22px;
+  }
+  button.action{
+    border:0;
+    border-radius:12px;
+    padding:15px 20px;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+    background:var(--blue);
+    color:#fff;
+    min-width:150px;
+  }
+  button.action.secondary{
+    background:#dfe8ef;
+    color:var(--navy);
+  }
+  button.action.danger{
+    background:#fff;
+    color:var(--red);
+    border:2px solid #edb7b2;
+  }
+  button.action:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+  }
+  .ticket-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(220px,1fr));
+    gap:16px;
+    margin:22px 0;
+  }
+  .ticket{
+    text-align:left;
+    padding:18px 16px;
+    border:2px solid #9fb8cc;
+    background:#fff;
+    border-radius:14px;
+    cursor:pointer;
+  }
+  .ticket h3{
+    margin:0 0 8px;
+    color:var(--navy);
+    font-size:24px;
+  }
+  .ticket small{
+    color:var(--muted);
+    display:block;
+    margin-bottom:6px;
+  }
+  .ticket .price{
+    font-size:22px;
+    font-weight:700;
+    color:var(--blue);
+  }
+  .ticket.selected{
+    border-color:var(--blue);
+    background:#e9f4fd;
+    box-shadow:0 0 0 3px rgba(38,121,201,.14);
+  }
+  .field{
+    max-width:340px;
+    margin:18px 0;
+  }
+  .field label{
+    display:block;
+    font-weight:700;
+    margin-bottom:8px;
+  }
+  .qty-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .qty-controls button{
+    width:46px;height:46px;border-radius:12px;border:2px solid #9fb8cc;
+    background:#fff;font-size:24px;font-weight:700;cursor:pointer;color:var(--navy);
+  }
+  .qty-display{
+    width:72px;text-align:center;font-size:24px;font-weight:700;
+    padding:10px;border:2px solid #9fb8cc;border-radius:12px;background:#f9fbfd;
+  }
+  .summary{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px 18px;
+    font-size:18px;
+  }
+  .summary .value{font-weight:700}
+  .paybox{
+    border:2px dashed #7f9db6;
+    padding:28px;
+    border-radius:16px;
+    text-align:center;
+    margin:22px 0;
+  }
+  .card-icon{
+    width:120px;height:78px;border-radius:10px;
+    margin:0 auto 14px;
+    background:linear-gradient(135deg,#dde8f1,#bacfe0);
+    border:2px solid #7f9db6;
+    position:relative;
+  }
+  .card-icon:before{
+    content:"";
+    position:absolute;left:12px;top:14px;
+    width:30px;height:22px;border-radius:4px;background:#e0bf5b;
+  }
+  .ok{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    color:var(--green);
+    font-weight:800;
+    font-size:22px;
+  }
+  .check{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--green);color:white;
+    display:grid;place-items:center;
+  }
+  .error{
+    color:var(--red);
+    font-weight:700;
+    min-height:24px;
+    margin-top:8px;
+  }
+  .tiny{
+    font-size:12px;
+    color:#7f8a95;
+    margin-top:10px;
+  }
+  .footer{
+    margin-top:28px;
+    border-top:1px solid #e1e7ec;
+    padding-top:16px;
+    color:#6b7884;
+    font-size:13px;
+  }
+  @media (max-width:700px){
+    .content{padding:24px 18px}
+    .ticket-grid{grid-template-columns:1fr}
+    button.action{width:100%}
+  }
+</style>
+</head>
+<body>
+<main class="kiosk" aria-live="polite">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">R</div>
+      <div>Riverside Transit Ticket Kiosk</div>
+    </div>
+    <button class="reset" onclick="resetKiosk()">Reset kiosk</button>
+  </div>
+
+  <section class="content">
+    <div id="s1" class="screen active">
+      <h1>Buy Transit Tickets</h1>
+      <p class="muted">Riverside District Bus Stop</p>
+      <div class="panel">
+        <strong>Before you begin</strong>
+        <p>Have your payment card ready. Select your ticket type, confirm your order, and complete payment.</p>
+      </div>
+      <div class="buttons">
+        <button class="action" onclick="go(2)">START</button>
+      </div>
+      <div class="footer">Riverside Transit Services</div>
+    </div>
+
+    <div id="s2" class="screen">
+      <h2>Select a ticket</h2>
+      <p class="muted">Choose the fare product you want to buy.</p>
+      <div class="ticket-grid">
+        <button class="ticket" onclick="selectTicket('Adult Day Pass', 8.00, this)">
+          <h3>Adult Day Pass</h3>
+          <small>Unlimited rides until end of service</small>
+          <div class="price">$8.00</div>
+        </button>
+        <button class="ticket" onclick="selectTicket('Single Ride', 2.75, this)">
+          <h3>Single Ride</h3>
+          <small>Valid for one trip</small>
+          <div class="price">$2.75</div>
+        </button>
+        <button class="ticket" onclick="selectTicket('Student Day Pass', 6.00, this)">
+          <h3>Student Day Pass</h3>
+          <small>Student ID may be required</small>
+          <div class="price">$6.00</div>
+        </button>
+        <button class="ticket" onclick="selectTicket('Senior Day Pass', 5.50, this)">
+          <h3>Senior Day Pass</h3>
+          <small>Proof of eligibility may be required</small>
+          <div class="price">$5.50</div>
+        </button>
+      </div>
+      <div class="buttons">
+        <button class="action secondary" onclick="go(1)">Back</button>
+        <button id="ticketNext" class="action" onclick="go(3)" disabled>Next</button>
+        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="s3" class="screen">
+      <h2>Choose quantity</h2>
+      <p class="muted">How many tickets would you like?</p>
+      <div class="field">
+        <label>Quantity</label>
+        <div class="qty-controls">
+          <button onclick="changeQty(-1)">−</button>
+          <div class="qty-display" id="qtyDisplay">1</div>
+          <button onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <div class="notice">For Lab 3, your task will usually require <strong>one</strong> ticket.</div>
+      <div class="buttons">
+        <button class="action secondary" onclick="go(2)">Back</button>
+        <button class="action" onclick="updateReview()">Continue</button>
+        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="s4" class="screen">
+      <h2>Review your order</h2>
+      <div class="panel summary">
+        <div>Ticket type</div><div class="value" id="sumTicket">—</div>
+        <div>Quantity</div><div class="value" id="sumQty">—</div>
+        <div>Total</div><div class="value" id="sumTotal">—</div>
+      </div>
+      <div class="buttons">
+        <button class="action secondary" onclick="go(2)">Change ticket</button>
+        <button class="action secondary" onclick="go(3)">Change quantity</button>
+        <button class="action" onclick="go(5)">Pay now</button>
+      </div>
+    </div>
+
+    <div id="s5" class="screen">
+      <h2>Payment</h2>
+      <p class="muted">Tap or insert your card to complete payment.</p>
+      <div class="paybox">
+        <div class="card-icon" aria-hidden="true"></div>
+        <button class="action" onclick="processPayment()">Tap demo card</button>
+        <div id="payStatus" class="error"></div>
+      </div>
+      <div class="buttons">
+        <button class="action secondary" onclick="go(4)">Back</button>
+        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+      </div>
+      <div class="tiny">Card payments only. Cash is not accepted at this kiosk.</div>
+    </div>
+
+    <div id="s6" class="screen">
+      <div class="ok"><span class="check">✓</span> Payment approved</div>
+      <h1 style="margin-top:16px">Purchase complete</h1>
+      <div class="panel summary">
+        <div>Ticket type</div><div class="value" id="doneTicket">—</div>
+        <div>Quantity</div><div class="value" id="doneQty">—</div>
+        <div>Total paid</div><div class="value" id="doneTotal">—</div>
+      </div>
+      <div class="notice">Please keep your digital confirmation available until the end of your trip.</div>
+      <div class="buttons">
+        <button class="action" onclick="resetKiosk()">Done</button>
+      </div>
+    </div>
+
+    <div id="sCancel" class="screen">
+      <h1>Transaction cancelled</h1>
+      <p>Your purchase was not completed.</p>
+      <div class="buttons">
+        <button class="action" onclick="resetKiosk()">Return to start</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+let selectedTicket = "";
+let ticketPrice = 0;
+let quantity = 1;
+
+function show(id){
+  document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function go(n){ show("s"+n); }
+
+function selectTicket(name, price, btn){
+  selectedTicket = name;
+  ticketPrice = price;
+  document.querySelectorAll(".ticket").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
+  document.getElementById("ticketNext").disabled = false;
+}
+function changeQty(delta){
+  quantity = Math.max(1, Math.min(6, quantity + delta));
+  document.getElementById("qtyDisplay").textContent = quantity;
+}
+function updateReview(){
+  const total = (ticketPrice * quantity).toFixed(2);
+  document.getElementById("sumTicket").textContent = selectedTicket || "—";
+  document.getElementById("sumQty").textContent = quantity;
+  document.getElementById("sumTotal").textContent = "$" + total;
+  go(4);
+}
+function processPayment(){
+  const status = document.getElementById("payStatus");
+  status.style.color = "#5f6f7f";
+  status.textContent = "Processing...";
+  setTimeout(()=>{
+    const total = (ticketPrice * quantity).toFixed(2);
+    document.getElementById("doneTicket").textContent = selectedTicket;
+    document.getElementById("doneQty").textContent = quantity;
+    document.getElementById("doneTotal").textContent = "$" + total;
+    status.textContent = "";
+    go(6);
+  }, 700);
+}
+function cancelFlow(){ show("sCancel"); }
+function resetKiosk(){
+  selectedTicket = "";
+  ticketPrice = 0;
+  quantity = 1;
+  document.getElementById("qtyDisplay").textContent = "1";
+  document.getElementById("payStatus").textContent = "";
+  document.getElementById("ticketNext").disabled = true;
+  document.querySelectorAll(".ticket").forEach(x=>x.classList.remove("selected"));
+  go(1);
+}
+</script>
+</body>
+</html>
