@@ -12,6 +12,8 @@
     --mid:#d6e7f6;
     --green:#2e8b57;
     --red:#c0392b;
+    --amber:#b8860b;
+    --grey:#5b6b78;
     --text:#1e2b36;
     --muted:#667786;
     --shadow:0 18px 46px rgba(17,56,91,.16);
@@ -30,12 +32,13 @@
   }
   .kiosk{
     width:min(900px,96vw);
-    min-height:640px;
+    min-height:660px;
     background:#fff;
     border:10px solid var(--navy);
     border-radius:34px;
     box-shadow:var(--shadow);
     overflow:hidden;
+    position:relative;
   }
   .topbar{
     background:var(--navy);
@@ -59,6 +62,7 @@
     display:grid;place-items:center;
     font-weight:900;
   }
+  .topbar-right{ display:flex; align-items:center; gap:8px; }
   .reset{
     border:1px solid rgba(255,255,255,.5);
     background:transparent;
@@ -67,6 +71,43 @@
     padding:8px 11px;
     cursor:pointer;
     font-size:13px;
+  }
+  .gear{
+    border:1px solid rgba(255,255,255,.35);
+    background:transparent;
+    color:#fff;
+    border-radius:10px;
+    width:34px; height:34px;
+    cursor:pointer;
+    font-size:15px;
+    opacity:.75;
+  }
+  .gear:hover{ opacity:1; }
+  .fac-panel{
+    display:none;
+    position:absolute;
+    top:60px; right:18px;
+    background:#fff;
+    border:1px solid var(--mid);
+    border-radius:14px;
+    box-shadow:0 12px 30px rgba(17,56,91,.22);
+    padding:14px;
+    z-index:20;
+    width:230px;
+  }
+  .fac-panel.open{ display:block; }
+  .fac-panel h4{ margin:0 0 8px; color:var(--navy); font-size:13px; }
+  .fac-panel button{
+    display:block; width:100%;
+    margin-bottom:8px;
+    border:1px solid var(--mid);
+    background:var(--light);
+    color:var(--navy);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:12px;
+    cursor:pointer;
+    text-align:left;
   }
   .content{padding:34px}
   .screen{display:none}
@@ -92,6 +133,10 @@
     padding:13px 16px;
     border-radius:10px;
     margin:18px 0;
+  }
+  .notice.bad{
+    background:#fdecea;
+    border-left-color:var(--red);
   }
   .buttons{
     display:flex;
@@ -136,11 +181,12 @@
     background:#fff;
     border-radius:14px;
     cursor:pointer;
+    position:relative;
   }
   .ticket h3{
     margin:0 0 8px;
     color:var(--navy);
-    font-size:24px;
+    font-size:22px;
   }
   .ticket small{
     color:var(--muted);
@@ -157,6 +203,16 @@
     background:#e9f4fd;
     box-shadow:0 0 0 3px rgba(38,121,201,.14);
   }
+  .badge{
+    position:absolute;
+    top:-10px; right:12px;
+    background:var(--amber);
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    padding:4px 10px;
+    border-radius:999px;
+  }
   .field{
     max-width:340px;
     margin:18px 0;
@@ -165,6 +221,13 @@
     display:block;
     font-weight:700;
     margin-bottom:8px;
+  }
+  .field input[type=text]{
+    width:100%;
+    padding:12px 14px;
+    border:2px solid #9fb8cc;
+    border-radius:10px;
+    font-size:16px;
   }
   .qty-controls{
     display:flex;
@@ -213,9 +276,22 @@
     font-weight:800;
     font-size:22px;
   }
+  .bad-icon{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    color:var(--red);
+    font-weight:800;
+    font-size:22px;
+  }
   .check{
     width:34px;height:34px;border-radius:50%;
     background:var(--green);color:white;
+    display:grid;place-items:center;
+  }
+  .x-icon{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--red);color:white;
     display:grid;place-items:center;
   }
   .error{
@@ -236,6 +312,20 @@
     color:#6b7884;
     font-size:13px;
   }
+  .dots{
+    font-size:26px;
+    letter-spacing:8px;
+    color:var(--blue);
+    text-align:center;
+    margin:26px 0;
+  }
+  .freeze-mark{
+    text-align:center;
+    font-size:52px;
+    color:#c7cfd6;
+    font-weight:800;
+    margin:30px 0;
+  }
   @media (max-width:700px){
     .content{padding:24px 18px}
     .ticket-grid{grid-template-columns:1fr}
@@ -250,7 +340,17 @@
       <div class="logo">R</div>
       <div>Riverside Transit Ticket Kiosk</div>
     </div>
-    <button class="reset" onclick="resetKiosk()">Reset kiosk</button>
+    <div class="topbar-right">
+      <button class="gear" title="Facilitator controls" onclick="toggleFacPanel()">&#9881;</button>
+      <button class="reset" onclick="resetKiosk()">Reset kiosk</button>
+    </div>
+  </div>
+
+  <div class="fac-panel" id="facPanel">
+    <h4>Facilitator controls</h4>
+    <button onclick="show('sTimeout'); closeFacPanel();">Force: Session Timeout</button>
+    <button onclick="show('sFrozen'); closeFacPanel();">Force: System Frozen</button>
+    <button onclick="resetKiosk(); closeFacPanel();">Force: Reset to Start</button>
   </div>
 
   <section class="content">
@@ -271,9 +371,15 @@
       <h2>Select a ticket</h2>
       <p class="muted">Choose the fare product you want to buy.</p>
       <div class="ticket-grid">
+        <button class="ticket" onclick="selectTicket('Regional Day Pass', 9.50, this)">
+          <span class="badge">Most Popular</span>
+          <h3>Regional Day Pass</h3>
+          <small>Unlimited rides across all zones, including express routes</small>
+          <div class="price">$9.50</div>
+        </button>
         <button class="ticket" onclick="selectTicket('Adult Day Pass', 8.00, this)">
           <h3>Adult Day Pass</h3>
-          <small>Unlimited rides until end of service</small>
+          <small>Unlimited rides until end of service, local routes only</small>
           <div class="price">$8.00</div>
         </button>
         <button class="ticket" onclick="selectTicket('Single Ride', 2.75, this)">
@@ -283,18 +389,27 @@
         </button>
         <button class="ticket" onclick="selectTicket('Student Day Pass', 6.00, this)">
           <h3>Student Day Pass</h3>
-          <small>Student ID may be required</small>
+          <small>Student ID verification required</small>
           <div class="price">$6.00</div>
-        </button>
-        <button class="ticket" onclick="selectTicket('Senior Day Pass', 5.50, this)">
-          <h3>Senior Day Pass</h3>
-          <small>Proof of eligibility may be required</small>
-          <div class="price">$5.50</div>
         </button>
       </div>
       <div class="buttons">
         <button class="action secondary" onclick="go(1)">Back</button>
-        <button id="ticketNext" class="action" onclick="go(3)" disabled>Next</button>
+        <button id="ticketNext" class="action" onclick="afterTicketNext()" disabled>Next</button>
+        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+      </div>
+    </div>
+
+    <div id="s2b" class="screen">
+      <h2>Student ID verification</h2>
+      <p class="muted">Tap your student ID card on the reader to continue.</p>
+      <div class="paybox">
+        <div class="card-icon" aria-hidden="true"></div>
+        <button class="action" onclick="verifyStudentId()">Tap student ID</button>
+        <div id="idStatus" class="error"></div>
+      </div>
+      <div class="buttons">
+        <button class="action secondary" onclick="go(2)">Back</button>
         <button class="action danger" onclick="cancelFlow()">Cancel</button>
       </div>
     </div>
@@ -305,7 +420,7 @@
       <div class="field">
         <label>Quantity</label>
         <div class="qty-controls">
-          <button onclick="changeQty(-1)">−</button>
+          <button onclick="changeQty(-1)">&minus;</button>
           <div class="qty-display" id="qtyDisplay">1</div>
           <button onclick="changeQty(1)">+</button>
         </div>
@@ -313,7 +428,7 @@
       <div class="notice">For Lab 3, your task will usually require <strong>one</strong> ticket.</div>
       <div class="buttons">
         <button class="action secondary" onclick="go(2)">Back</button>
-        <button class="action" onclick="updateReview()">Continue</button>
+        <button class="action" onclick="go(4)">Continue</button>
         <button class="action danger" onclick="cancelFlow()">Cancel</button>
       </div>
     </div>
@@ -321,14 +436,18 @@
     <div id="s4" class="screen">
       <h2>Review your order</h2>
       <div class="panel summary">
-        <div>Ticket type</div><div class="value" id="sumTicket">—</div>
-        <div>Quantity</div><div class="value" id="sumQty">—</div>
-        <div>Total</div><div class="value" id="sumTotal">—</div>
+        <div>Ticket type</div><div class="value" id="sumTicket">&mdash;</div>
+        <div>Quantity</div><div class="value" id="sumQty">&mdash;</div>
+        <div>Total</div><div class="value" id="sumTotal">&mdash;</div>
+      </div>
+      <div class="field">
+        <label>Promo code (optional)</label>
+        <input type="text" placeholder="Leave blank if none" id="promoInput" />
       </div>
       <div class="buttons">
         <button class="action secondary" onclick="go(2)">Change ticket</button>
         <button class="action secondary" onclick="go(3)">Change quantity</button>
-        <button class="action" onclick="go(5)">Pay now</button>
+        <button class="action" onclick="prepPay()">Pay now</button>
       </div>
     </div>
 
@@ -337,7 +456,7 @@
       <p class="muted">Tap or insert your card to complete payment.</p>
       <div class="paybox">
         <div class="card-icon" aria-hidden="true"></div>
-        <button class="action" onclick="processPayment()">Tap demo card</button>
+        <button class="action" id="payBtn" onclick="processPayment()">Tap demo card</button>
         <div id="payStatus" class="error"></div>
       </div>
       <div class="buttons">
@@ -347,13 +466,29 @@
       <div class="tiny">Card payments only. Cash is not accepted at this kiosk.</div>
     </div>
 
+    <div id="s5b" class="screen">
+      <div class="bad-icon"><span class="x-icon">&times;</span> Payment declined</div>
+      <h1 style="margin-top:16px">We couldn't process your card</h1>
+      <div class="notice bad">The card was declined by your bank. No amount was charged. You can try again or cancel this transaction.</div>
+      <div class="buttons">
+        <button class="action" onclick="go(5)">Try again</button>
+        <button class="action danger" onclick="cancelFlow()">Cancel transaction</button>
+      </div>
+    </div>
+
+    <div id="sProcessing" class="screen">
+      <h2 style="text-align:center">Processing payment&hellip;</h2>
+      <div class="dots">&bull; &bull; &bull;</div>
+      <p class="muted" style="text-align:center">Please wait. Do not remove your card.</p>
+    </div>
+
     <div id="s6" class="screen">
-      <div class="ok"><span class="check">✓</span> Payment approved</div>
+      <div class="ok"><span class="check">&#10003;</span> Payment approved</div>
       <h1 style="margin-top:16px">Purchase complete</h1>
       <div class="panel summary">
-        <div>Ticket type</div><div class="value" id="doneTicket">—</div>
-        <div>Quantity</div><div class="value" id="doneQty">—</div>
-        <div>Total paid</div><div class="value" id="doneTotal">—</div>
+        <div>Ticket type</div><div class="value" id="doneTicket">&mdash;</div>
+        <div>Quantity</div><div class="value" id="doneQty">&mdash;</div>
+        <div>Total paid</div><div class="value" id="doneTotal">&mdash;</div>
       </div>
       <div class="notice">Please keep your digital confirmation available until the end of your trip.</div>
       <div class="buttons">
@@ -368,6 +503,22 @@
         <button class="action" onclick="resetKiosk()">Return to start</button>
       </div>
     </div>
+
+    <div id="sTimeout" class="screen">
+      <h1>Session timed out</h1>
+      <div class="notice bad">Your session ended due to inactivity. No payment was taken.</div>
+      <div class="buttons">
+        <button class="action" onclick="resetKiosk()">Start over</button>
+      </div>
+    </div>
+
+    <div id="sFrozen" class="screen">
+      <div class="freeze-mark">&hellip;</div>
+      <p class="muted" style="text-align:center">The screen is not responding to input.<br>(Simulated system freeze &mdash; facilitator use.)</p>
+      <div class="buttons" style="justify-content:center">
+        <button class="action secondary" onclick="resetKiosk()">Restart kiosk</button>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -375,12 +526,24 @@
 let selectedTicket = "";
 let ticketPrice = 0;
 let quantity = 1;
+let paymentAttempts = 0;
+let idleTimer = null;
+const IDLE_LIMIT_MS = 25000; // 25 seconds of inactivity triggers a timeout screen
 
 function show(id){
   document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
   document.getElementById(id).classList.add("active");
 }
-function go(n){ show("s"+n); }
+function go(n){
+  show("s"+n);
+}
+
+function toggleFacPanel(){
+  document.getElementById("facPanel").classList.toggle("open");
+}
+function closeFacPanel(){
+  document.getElementById("facPanel").classList.remove("open");
+}
 
 function selectTicket(name, price, btn){
   selectedTicket = name;
@@ -389,41 +552,96 @@ function selectTicket(name, price, btn){
   btn.classList.add("selected");
   document.getElementById("ticketNext").disabled = false;
 }
+
+function afterTicketNext(){
+  if (selectedTicket === "Student Day Pass") {
+    document.getElementById("idStatus").textContent = "";
+    show("s2b");
+  } else {
+    go(3);
+  }
+}
+
+function verifyStudentId(){
+  const status = document.getElementById("idStatus");
+  status.style.color = "#5f6f7f";
+  status.textContent = "Checking ID...";
+  setTimeout(() => {
+    status.style.color = "var(--green)";
+    status.textContent = "ID verified.";
+    setTimeout(() => go(3), 500);
+  }, 700);
+}
+
 function changeQty(delta){
   quantity = Math.max(1, Math.min(6, quantity + delta));
   document.getElementById("qtyDisplay").textContent = quantity;
 }
-function updateReview(){
+
+function prepPay(){
   const total = (ticketPrice * quantity).toFixed(2);
-  document.getElementById("sumTicket").textContent = selectedTicket || "—";
+  document.getElementById("sumTicket").textContent = selectedTicket || "\u2014";
   document.getElementById("sumQty").textContent = quantity;
   document.getElementById("sumTotal").textContent = "$" + total;
-  go(4);
+  paymentAttempts = 0;
+  document.getElementById("payStatus").textContent = "";
+  go(5);
 }
+
 function processPayment(){
   const status = document.getElementById("payStatus");
+  const payBtn = document.getElementById("payBtn");
+  paymentAttempts++;
+  payBtn.disabled = true;
   status.style.color = "#5f6f7f";
   status.textContent = "Processing...";
-  setTimeout(()=>{
+  show("sProcessing");
+  setTimeout(() => {
+    payBtn.disabled = false;
+    // First attempt is always declined, so every team experiences the
+    // "Payment is declined" alternate flow at least once (Lab 3, Part D).
+    if (paymentAttempts === 1) {
+      show("s5b");
+      return;
+    }
     const total = (ticketPrice * quantity).toFixed(2);
     document.getElementById("doneTicket").textContent = selectedTicket;
     document.getElementById("doneQty").textContent = quantity;
     document.getElementById("doneTotal").textContent = "$" + total;
     status.textContent = "";
     go(6);
-  }, 700);
+  }, 1100);
 }
+
 function cancelFlow(){ show("sCancel"); }
+
 function resetKiosk(){
   selectedTicket = "";
   ticketPrice = 0;
   quantity = 1;
+  paymentAttempts = 0;
   document.getElementById("qtyDisplay").textContent = "1";
   document.getElementById("payStatus").textContent = "";
   document.getElementById("ticketNext").disabled = true;
   document.querySelectorAll(".ticket").forEach(x=>x.classList.remove("selected"));
+  const promo = document.getElementById("promoInput");
+  if (promo) promo.value = "";
   go(1);
 }
+
+// ---- idle timeout: if the "user" stalls on any screen other than
+// the start/end states, the kiosk times out on its own, the same
+// way a real kiosk would (supports Part B observation + Part D). ----
+function resetIdleTimer(){
+  if (idleTimer) clearTimeout(idleTimer);
+  const activeId = document.querySelector(".screen.active").id;
+  const exempt = ["s1", "s6", "sCancel", "sTimeout", "sFrozen"];
+  if (exempt.includes(activeId)) return;
+  idleTimer = setTimeout(() => { show("sTimeout"); }, IDLE_LIMIT_MS);
+}
+document.addEventListener("click", resetIdleTimer);
+document.addEventListener("keydown", resetIdleTimer);
+resetIdleTimer();
 </script>
 </body>
 </html>
