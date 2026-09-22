@@ -6,16 +6,16 @@
 <title>Riverside Transit Ticket Kiosk</title>
 <style>
   :root{
-    --navy:#11385b;
-    --blue:#2679c9;
-    --light:#eef6fc;
-    --mid:#d6e7f6;
+    --navy:#173f61;
+    --blue:#2b78b8;
+    --light:#eef4f8;
+    --mid:#cad9e4;
     --green:#2e8b57;
     --red:#c0392b;
     --amber:#b8860b;
     --grey:#5b6b78;
     --text:#1e2b36;
-    --muted:#667786;
+    --muted:#7f8d98;
     --shadow:0 18px 46px rgba(17,56,91,.16);
   }
   *{box-sizing:border-box}
@@ -23,7 +23,7 @@
     margin:0;
     font-family:Arial, Helvetica, sans-serif;
     color:var(--text);
-    background:linear-gradient(135deg,#eef4fa,#f9fbfd);
+    background:linear-gradient(135deg,#e9eef2,#f8fafc);
     min-height:100vh;
     display:flex;
     align-items:center;
@@ -109,19 +109,20 @@
     cursor:pointer;
     text-align:left;
   }
-  .content{padding:34px}
+  .content{padding:26px 30px}
   .screen{display:none}
   .screen.active{display:block}
   h1{
     color:var(--navy);
     margin:0 0 10px;
     font-size:clamp(28px,4vw,42px);
+    
   }
-  h2{color:var(--navy);margin-top:0}
+  h2{color:var(--navy);margin-top:0;}
   p{line-height:1.5}
   .muted{color:var(--muted)}
   .panel{
-    background:var(--light);
+    background:#f7f8f9;
     border:1px solid var(--mid);
     border-radius:18px;
     padding:18px 20px;
@@ -147,31 +148,45 @@
   button.action{
     border:0;
     border-radius:12px;
-    padding:15px 20px;
-    font-size:18px;
+    padding:12px 16px;
+    font-size:15px;
     font-weight:700;
     cursor:pointer;
     background:var(--blue);
     color:#fff;
-    min-width:150px;
+    min-width:95px;
+    
+    letter-spacing:.5px;
   }
   button.action.secondary{
     background:#dfe8ef;
     color:var(--navy);
   }
   button.action.danger{
-    background:#fff;
-    color:var(--red);
-    border:2px solid #edb7b2;
+    background:#c84a42;
+    color:#fff;
+    border:0;
+    padding:12px 16px;
+    font-size:15px;
+    min-width:95px;
+    box-shadow:none;
   }
   button.action:disabled{
     opacity:.45;
     cursor:not-allowed;
   }
+  button.action.looks-disabled{
+    background:#e4e9ed;
+    color:#a7b2ba;
+  }
+  button.action.confusable{
+    background:var(--blue);
+    color:#fff;
+  }
   .ticket-grid{
     display:grid;
     grid-template-columns:repeat(2,minmax(220px,1fr));
-    gap:16px;
+    gap:8px;
     margin:22px 0;
   }
   .ticket{
@@ -186,29 +201,30 @@
   .ticket h3{
     margin:0 0 8px;
     color:var(--navy);
-    font-size:22px;
+    font-size:15px;
   }
   .ticket small{
-    color:var(--muted);
+    color:#8998a4;
+    font-size:15px;
     display:block;
     margin-bottom:6px;
   }
   .ticket .price{
-    font-size:22px;
+    font-size:15px;
     font-weight:700;
     color:var(--blue);
   }
   .ticket.selected{
-    border-color:var(--blue);
-    background:#e9f4fd;
-    box-shadow:0 0 0 3px rgba(38,121,201,.14);
+    border-color:#7f9fb8;
+    background:#f5f8fa;
+    box-shadow:none;
   }
   .badge{
     position:absolute;
     top:-10px; right:12px;
     background:var(--amber);
     color:#fff;
-    font-size:11px;
+    font-size:15px;
     font-weight:700;
     padding:4px 10px;
     border-radius:999px;
@@ -274,7 +290,7 @@
     gap:10px;
     color:var(--green);
     font-weight:800;
-    font-size:22px;
+    font-size:15px;
   }
   .bad-icon{
     display:inline-flex;
@@ -282,7 +298,7 @@
     gap:10px;
     color:var(--red);
     font-weight:800;
-    font-size:22px;
+    font-size:15px;
   }
   .check{
     width:34px;height:34px;border-radius:50%;
@@ -319,6 +335,8 @@
     text-align:center;
     margin:26px 0;
   }
+50%{opacity:.55;}
+  }
   .freeze-mark{
     text-align:center;
     font-size:52px;
@@ -331,48 +349,179 @@
     .ticket-grid{grid-template-columns:1fr}
     button.action{width:100%}
   }
+
+  /* --- Intentionally poor usability for Lab 3 --- */
+  .screen-note{
+    font-size:11px;
+    color:#9aa4ac;
+    line-height:1.25;
+    max-width:640px;
+  }
+
+  .bad-instructions{
+    border:1px solid #d8dee3;
+    background:#fafafa;
+    padding:10px 12px;
+    margin:10px 0 16px;
+    font-size:11px;
+    color:#87939c;
+    line-height:1.25;
+  }
+
+  .warning-strip{
+    background:#fff1d6;
+    border:1px solid #e4c47c;
+    color:#7a6640;
+    padding:7px 10px;
+    font-size:11px;
+    margin-bottom:12px;
+  }
+
+  .primary-bad{
+    background:#dfe5e9 !important;
+    color:#8d979f !important;
+    border:1px solid #cfd6db !important;
+  }
+
+  .cancel-too-strong{
+    background:#be433c !important;
+    color:#fff !important;
+    font-size:17px !important;
+    padding:15px 22px !important;
+    min-width:180px !important;
+  }
+
+  .linklike{
+    background:transparent !important;
+    color:#9aa5ad !important;
+    border:0 !important;
+    text-decoration:underline;
+    padding:5px 7px !important;
+    min-width:0 !important;
+    font-size:12px !important;
+  }
+
+  .ticket-grid{
+    align-items:stretch;
+  }
+
+  .ticket:nth-child(1){
+    border-width:3px;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+  }
+
+  .ticket:nth-child(2){
+    border-style:dashed;
+  }
+
+  .ticket:nth-child(3){
+    padding-top:25px;
+  }
+
+  .ticket:nth-child(4){
+    background:#f7f8f8;
+  }
+
+  .ticket.selected{
+    border-color:#aab4bb !important;
+    background:#f9fafb !important;
+    box-shadow:none !important;
+  }
+
+  .ticket.selected:after{
+    content:"selected";
+    position:absolute;
+    bottom:6px;
+    right:8px;
+    font-size:9px;
+    color:#9aa4ac;
+  }
+
+  .important-faint{
+    font-size:11px;
+    color:#a5adb3;
+  }
+
+  .confusing-row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .countdown{
+    font-size:11px;
+    color:#9b6b4a;
+    text-align:right;
+    margin-bottom:8px;
+  }
+
+  .fake-disabled{
+    opacity:.55;
+  }
+
+  .dense-copy{
+    font-size:11px;
+    color:#7f8a92;
+    line-height:1.2;
+  }
+
+  .error-code{
+    font-family:monospace;
+    font-size:12px;
+    color:#7d4a46;
+    background:#f5eeee;
+    padding:8px 10px;
+    border-radius:6px;
+  }
+
 </style>
 </head>
 <body>
 <main class="kiosk" aria-live="polite">
-  <div class="topbar">
+<div class="topbar">
     <div class="brand">
       <div class="logo">R</div>
       <div>Riverside Transit Ticket Kiosk</div>
     </div>
     <div class="topbar-right">
-      <button class="gear" title="Facilitator controls" onclick="toggleFacPanel()">&#9881;</button>
+      <button class="gear" title="Simulation Controls" onclick="toggleFacPanel()">&#9881;</button>
       <button class="reset" onclick="resetKiosk()">Reset kiosk</button>
     </div>
   </div>
 
   <div class="fac-panel" id="facPanel">
-    <h4>Facilitator controls</h4>
+    <h4>Simulation Controls</h4>
     <button onclick="show('sTimeout'); closeFacPanel();">Force: Session Timeout</button>
     <button onclick="show('sFrozen'); closeFacPanel();">Force: System Frozen</button>
+    <button onclick="forceNextDecline = true; closeFacPanel();">Force: Payment Declined</button>
     <button onclick="resetKiosk(); closeFacPanel();">Force: Reset to Start</button>
   </div>
 
-  <section class="content">
+  <section class="content"><div class="countdown">Session may expire after a short period of inactivity.</div>
     <div id="s1" class="screen active">
       <h1>Buy Transit Tickets</h1>
       <p class="muted">Riverside District Bus Stop</p>
+      <div class="warning-strip">Please complete your transaction promptly. Sessions may expire.</div>
       <div class="panel">
         <strong>Before you begin</strong>
-        <p>Have your payment card ready. Select your ticket type, confirm your order, and complete payment.</p>
+        <p class="dense-copy">Have your payment card ready. Fare eligibility, route coverage, travel period, transfer conditions, rider category, and service restrictions may differ between products.</p>
+        <p class="important-faint">Not all day passes are valid on the same services. Some selections may not be changeable after payment.</p>
       </div>
       <div class="buttons">
-        <button class="action" onclick="go(2)">START</button>
+        <button class="action primary-bad" onclick="go(2)">Continue</button>
+        <button class="action cancel-too-strong" onclick="cancelFlow()">Cancel</button>
       </div>
       <div class="footer">Riverside Transit Services</div>
     </div>
 
     <div id="s2" class="screen">
       <h2>Select a ticket</h2>
-      <p class="muted">Choose the fare product you want to buy.</p>
+      <p class="muted">Select the fare that applies to your trip.</p>
+      <div class="bad-instructions">Read each option carefully. Local, regional, express, eligibility and validity rules are different. The kiosk does not automatically determine the best fare for you.</div>
       <div class="ticket-grid">
         <button class="ticket" onclick="selectTicket('Regional Day Pass', 9.50, this)">
-          <span class="badge">Most Popular</span>
+          <span class="badge">BEST CHOICE</span>
           <h3>Regional Day Pass</h3>
           <small>Unlimited rides across all zones, including express routes</small>
           <div class="price">$9.50</div>
@@ -394,9 +543,9 @@
         </button>
       </div>
       <div class="buttons">
-        <button class="action secondary" onclick="go(1)">Back</button>
-        <button id="ticketNext" class="action" onclick="afterTicketNext()" disabled>Next</button>
-        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+        <button class="action" onclick="go(1)">Continue</button>
+        <button id="ticketNext" class="action primary-bad fake-disabled" onclick="afterTicketNext()" disabled>Back</button>
+        <button class="action cancel-too-strong" onclick="cancelFlow()">Cancel Purchase</button>
       </div>
     </div>
 
@@ -420,59 +569,62 @@
       <div class="field">
         <label>Quantity</label>
         <div class="qty-controls">
-          <button onclick="changeQty(-1)">&minus;</button>
-          <div class="qty-display" id="qtyDisplay">1</div>
           <button onclick="changeQty(1)">+</button>
+          <div class="qty-display" id="qtyDisplay">2</div>
+          <button onclick="changeQty(-1)">&minus;</button>
         </div>
       </div>
-      <div class="notice">For Lab 3, your task will usually require <strong>one</strong> ticket.</div>
+      <div class="notice">A quantity has been pre-selected for convenience. Confirm that the number shown is correct before moving on.</div>
       <div class="buttons">
-        <button class="action secondary" onclick="go(2)">Back</button>
-        <button class="action" onclick="go(4)">Continue</button>
-        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+        <button class="action" onclick="go(2)">Next</button>
+        <button class="action primary-bad" onclick="go(4)">Continue</button>
+        <button class="action cancel-too-strong" onclick="cancelFlow()">Cancel Purchase</button>
       </div>
     </div>
 
     <div id="s4" class="screen">
-      <h2>Review your order</h2>
+      <h2>Review your Fare Product</h2>
       <div class="panel summary">
         <div>Ticket type</div><div class="value" id="sumTicket">&mdash;</div>
         <div>Quantity</div><div class="value" id="sumQty">&mdash;</div>
         <div>Total</div><div class="value" id="sumTotal">&mdash;</div>
       </div>
       <div class="field">
-        <label>Promo code (optional)</label>
+        <label style="font-size:18px;color:#173f61">Fare Adjustment Voucher Code</label>
+        <div class="screen-note">Enter a code if one was provided by transit staff, your institution, your employer, a partner program, or another approved source.</div>
         <input type="text" placeholder="Leave blank if none" id="promoInput" />
       </div>
       <div class="buttons">
-        <button class="action secondary" onclick="go(2)">Change ticket</button>
-        <button class="action secondary" onclick="go(3)">Change quantity</button>
-        <button class="action" onclick="prepPay()">Pay now</button>
+        <button class="action" onclick="prepPay()">Pay</button>
+        <button class="action secondary" onclick="go(3)">Back</button>
+        <button class="action primary-bad" onclick="go(2)">Change Ticket</button>
       </div>
     </div>
 
     <div id="s5" class="screen">
       <h2>Payment</h2>
-      <p class="muted">Tap or insert your card to complete payment.</p>
+      <p class="muted">Present your payment card to the reader.</p>
+      <div class="bad-instructions">Do not remove your card until processing is complete. If the reader does not respond, wait and try again. Do not press Back during authorization.</div>
       <div class="paybox">
         <div class="card-icon" aria-hidden="true"></div>
-        <button class="action" id="payBtn" onclick="processPayment()">Tap demo card</button>
+        <button class="action linklike" id="payBtn" onclick="processPayment()">tap demo card</button>
         <div id="payStatus" class="error"></div>
       </div>
       <div class="buttons">
-        <button class="action secondary" onclick="go(4)">Back</button>
-        <button class="action danger" onclick="cancelFlow()">Cancel</button>
+        <button class="action" onclick="go(4)">Continue</button>
+        <button class="action cancel-too-strong" onclick="cancelFlow()">Cancel Purchase</button>
       </div>
       <div class="tiny">Card payments only. Cash is not accepted at this kiosk.</div>
     </div>
 
     <div id="s5b" class="screen">
-      <div class="bad-icon"><span class="x-icon">&times;</span> Payment declined</div>
-      <h1 style="margin-top:16px">We couldn't process your card</h1>
-      <div class="notice bad">The card was declined by your bank. No amount was charged. You can try again or cancel this transaction.</div>
+      <div class="bad-icon"><span class="x-icon">&times;</span> Transaction Exception</div>
+      <h1 style="margin-top:16px">PAYMENT STATE ERROR</h1>
+      <div class="error-code">ERR_AUTH_051 / HOST RESPONSE: NON-SUCCESS</div>
+      <div class="notice bad">The transaction was not completed. You may retry the current payment path or end the transaction.</div>
       <div class="buttons">
-        <button class="action" onclick="go(5)">Try again</button>
-        <button class="action danger" onclick="cancelFlow()">Cancel transaction</button>
+        <button class="action primary-bad" onclick="go(5)">OK</button>
+        <button class="action cancel-too-strong" onclick="cancelFlow()">Cancel Transaction</button>
       </div>
     </div>
 
@@ -483,16 +635,16 @@
     </div>
 
     <div id="s6" class="screen">
-      <div class="ok"><span class="check">&#10003;</span> Payment approved</div>
-      <h1 style="margin-top:16px">Purchase complete</h1>
+      <div class="screen-note">STATUS: transaction accepted</div>
+      <h1 style="margin-top:16px">Transaction Result</h1>
       <div class="panel summary">
         <div>Ticket type</div><div class="value" id="doneTicket">&mdash;</div>
         <div>Quantity</div><div class="value" id="doneQty">&mdash;</div>
         <div>Total paid</div><div class="value" id="doneTotal">&mdash;</div>
       </div>
-      <div class="notice">Please keep your digital confirmation available until the end of your trip.</div>
+      <div class="notice">Keep any applicable proof of purchase available during travel.</div>
       <div class="buttons">
-        <button class="action" onclick="resetKiosk()">Done</button>
+        <button class="action primary-bad" onclick="resetKiosk()">Continue</button>
       </div>
     </div>
 
@@ -514,7 +666,7 @@
 
     <div id="sFrozen" class="screen">
       <div class="freeze-mark">&hellip;</div>
-      <p class="muted" style="text-align:center">The screen is not responding to input.<br>(Simulated system freeze &mdash; facilitator use.)</p>
+      <p class="muted" style="text-align:center">The screen is not responding to input.</p>
       <div class="buttons" style="justify-content:center">
         <button class="action secondary" onclick="resetKiosk()">Restart kiosk</button>
       </div>
@@ -525,10 +677,11 @@
 <script>
 let selectedTicket = "";
 let ticketPrice = 0;
-let quantity = 1;
+let quantity = 2;
 let paymentAttempts = 0;
+let forceNextDecline = false;
 let idleTimer = null;
-const IDLE_LIMIT_MS = 25000; // 25 seconds of inactivity triggers a timeout screen
+const IDLE_LIMIT_MS = 45000; // intentionally short enough to create usability pressure
 
 function show(id){
   document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
@@ -598,9 +751,8 @@ function processPayment(){
   show("sProcessing");
   setTimeout(() => {
     payBtn.disabled = false;
-    // First attempt is always declined, so every team experiences the
-    // "Payment is declined" alternate flow at least once (Lab 3, Part D).
-    if (paymentAttempts === 1) {
+    if (forceNextDecline) {
+      forceNextDecline = false;
       show("s5b");
       return;
     }
@@ -610,17 +762,21 @@ function processPayment(){
     document.getElementById("doneTotal").textContent = "$" + total;
     status.textContent = "";
     go(6);
-  }, 1100);
+  }, 3500);
 }
 
-function cancelFlow(){ show("sCancel"); }
+function cancelFlow(){
+  var ok = confirm("Are you sure you want to abandon this transaction? This cannot be undone.");
+  if (ok) { show("sCancel"); }
+}
 
 function resetKiosk(){
   selectedTicket = "";
   ticketPrice = 0;
   quantity = 1;
   paymentAttempts = 0;
-  document.getElementById("qtyDisplay").textContent = "1";
+  forceNextDecline = false;
+  document.getElementById("qtyDisplay").textContent = "2";
   document.getElementById("payStatus").textContent = "";
   document.getElementById("ticketNext").disabled = true;
   document.querySelectorAll(".ticket").forEach(x=>x.classList.remove("selected"));
