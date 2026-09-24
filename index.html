@@ -485,17 +485,15 @@
       <div>Riverside Transit Ticket Kiosk</div>
     </div>
     <div class="topbar-right">
-      <button class="gear" title="Simulation Controls" onclick="toggleFacPanel()">&#9881;</button>
+      <button class="reset" id="problemTestBtn" onclick="toggleProblemMenu()">Start Problem Test</button>
       <button class="reset" onclick="resetKiosk()">Reset kiosk</button>
     </div>
   </div>
 
-  <div class="fac-panel" id="facPanel">
-    <h4>Simulation Controls</h4>
-    <button onclick="show('sTimeout'); closeFacPanel();">Force: Session Timeout</button>
-    <button onclick="show('sFrozen'); closeFacPanel();">Force: System Frozen</button>
-    <button onclick="forceNextDecline = true; closeFacPanel();">Force: Payment Declined</button>
-    <button onclick="resetKiosk(); closeFacPanel();">Force: Reset to Start</button>
+  <div class="fac-panel" id="problemMenu">
+    <h4>Choose Problem Test</h4>
+    <button onclick="startProblemTest('sTimeout')">Session Timeout</button>
+    <button onclick="startProblemTest('sFrozen')">System Frozen</button>
   </div>
 
   <section class="content"><div class="countdown">Session may expire after a short period of inactivity.</div>
@@ -657,18 +655,22 @@
     </div>
 
     <div id="sTimeout" class="screen">
-      <h1>Session timed out</h1>
-      <div class="notice bad">Your session ended due to inactivity. No payment was taken.</div>
+      <h1>Session ended</h1>
+      <div class="error-code">SESSION_408 / STATE EXPIRED</div>
+      <div class="notice bad">This session is no longer available.</div>
+      <p class="important-faint">Previous selections may not be recoverable.</p>
       <div class="buttons">
-        <button class="action" onclick="resetKiosk()">Start over</button>
+        <button class="action primary-bad" onclick="resetKiosk()">OK</button>
       </div>
     </div>
 
     <div id="sFrozen" class="screen">
       <div class="freeze-mark">&hellip;</div>
-      <p class="muted" style="text-align:center">The screen is not responding to input.</p>
+      <h2 style="text-align:center">Please wait</h2>
+      <p class="muted" style="text-align:center">The kiosk is not responding.</p>
+      <p class="important-faint" style="text-align:center">Current transaction status is unavailable.</p>
       <div class="buttons" style="justify-content:center">
-        <button class="action secondary" onclick="resetKiosk()">Restart kiosk</button>
+        <button class="action linklike" onclick="resetKiosk()">restart</button>
       </div>
     </div>
   </section>
@@ -679,9 +681,10 @@ let selectedTicket = "";
 let ticketPrice = 0;
 let quantity = 2;
 let paymentAttempts = 0;
-let forceNextDecline = false;
-let idleTimer = null;
-const IDLE_LIMIT_MS = 45000; // intentionally short enough to create usability pressure
+let problemTestActive = false;
+let problemTriggered = false;
+let problemTestTimer = null;
+let selectedProblemMode = null;
 
 function show(id){
   document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
@@ -689,13 +692,67 @@ function show(id){
 }
 function go(n){
   show("s"+n);
+
+  // The problem timer begins only after the Rider starts the new purchase.
+  if (problemTestActive && !problemTriggered && !problemTestTimer && n === 2) {
+    scheduleProblem();
+  }
 }
 
-function toggleFacPanel(){
-  document.getElementById("facPanel").classList.toggle("open");
+function toggleProblemMenu(){
+  if (problemTestActive) return;
+  document.getElementById("problemMenu").classList.toggle("open");
 }
-function closeFacPanel(){
-  document.getElementById("facPanel").classList.remove("open");
+
+function closeProblemMenu(){
+  document.getElementById("problemMenu").classList.remove("open");
+}
+
+function startProblemTest(mode){
+  // Reset the kiosk and arm a problem. The Rider still does not know when it will occur.
+  clearProblemTestTimer();
+  selectedProblemMode = mode;
+  problemTestActive = true;
+  problemTriggered = false;
+  closeProblemMenu();
+  resetKiosk(true);
+  updateProblemTestButton();
+}
+
+function scheduleProblem(){
+  // Trigger the problem selected by the Rider after a random 8-18 second delay.
+  const delay = 8000 + Math.floor(Math.random() * 10001);
+  const problem = selectedProblemMode;
+
+  problemTestTimer = setTimeout(() => {
+    problemTestTimer = null;
+    if (!problemTestActive || problemTriggered) return;
+
+    problemTriggered = true;
+    problemTestActive = false;
+    show(problem);
+    updateProblemTestButton();
+  }, delay);
+}
+
+function clearProblemTestTimer(){
+  if (problemTestTimer) {
+    clearTimeout(problemTestTimer);
+    problemTestTimer = null;
+  }
+}
+
+function updateProblemTestButton(){
+  const btn = document.getElementById("problemTestBtn");
+  if (!btn) return;
+
+  if (problemTestActive) {
+    btn.textContent = "Problem Test Active";
+    btn.disabled = true;
+  } else {
+    btn.textContent = "Start Problem Test";
+    btn.disabled = false;
+  }
 }
 
 function selectTicket(name, price, btn){
@@ -751,11 +808,6 @@ function processPayment(){
   show("sProcessing");
   setTimeout(() => {
     payBtn.disabled = false;
-    if (forceNextDecline) {
-      forceNextDecline = false;
-      show("s5b");
-      return;
-    }
     const total = (ticketPrice * quantity).toFixed(2);
     document.getElementById("doneTicket").textContent = selectedTicket;
     document.getElementById("doneQty").textContent = quantity;
@@ -770,34 +822,30 @@ function cancelFlow(){
   if (ok) { show("sCancel"); }
 }
 
-function resetKiosk(){
+function resetKiosk(preserveProblemTest = false){
+  if (!preserveProblemTest) {
+    clearProblemTestTimer();
+    problemTestActive = false;
+    problemTriggered = false;
+    selectedProblemMode = null;
+    closeProblemMenu();
+  }
+
   selectedTicket = "";
   ticketPrice = 0;
-  quantity = 1;
+  quantity = 2;
   paymentAttempts = 0;
-  forceNextDecline = false;
   document.getElementById("qtyDisplay").textContent = "2";
   document.getElementById("payStatus").textContent = "";
   document.getElementById("ticketNext").disabled = true;
   document.querySelectorAll(".ticket").forEach(x=>x.classList.remove("selected"));
   const promo = document.getElementById("promoInput");
   if (promo) promo.value = "";
-  go(1);
+  show("s1");
+  updateProblemTestButton();
 }
 
-// ---- idle timeout: if the "user" stalls on any screen other than
-// the start/end states, the kiosk times out on its own, the same
-// way a real kiosk would (supports Part B observation + Part D). ----
-function resetIdleTimer(){
-  if (idleTimer) clearTimeout(idleTimer);
-  const activeId = document.querySelector(".screen.active").id;
-  const exempt = ["s1", "s6", "sCancel", "sTimeout", "sFrozen"];
-  if (exempt.includes(activeId)) return;
-  idleTimer = setTimeout(() => { show("sTimeout"); }, IDLE_LIMIT_MS);
-}
-document.addEventListener("click", resetIdleTimer);
-document.addEventListener("keydown", resetIdleTimer);
-resetIdleTimer();
+updateProblemTestButton();
 </script>
 </body>
 </html>
